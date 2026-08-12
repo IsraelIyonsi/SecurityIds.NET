@@ -1,0 +1,2 @@
+* text=auto
+tests/SecurityIds.Net.Tests/fixtures/** -text
