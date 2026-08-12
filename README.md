@@ -70,10 +70,12 @@ int figiCheckDigit  = SecurityIdentifiers.ComputeFigiCheckDigit("BBG000BLNNH"); 
 
 | Scheme | Length | Structure | Check digit |
 |---|---|---|---|
-| ISIN (ISO 6166) | 12 | 2-letter country code + 9-character NSIN + 1 check digit | Letters expanded to two digits each (`A`=10 ... `Z`=35), then the standard Luhn algorithm |
+| ISIN (ISO 6166) | 12 | 2-letter country code + 9-character NSIN + 1 numeric check digit | Letters expanded to two digits each (`A`=10 ... `Z`=35), then the standard Luhn algorithm |
 | CUSIP | 9 | 6-character issuer number + 2-character issue number + 1 check digit | Modulus 10 double-add-double; letters `A`-`Z` value 10-35, plus `*`, `@`, `#` as 36-38 |
 | SEDOL | 7 | 6-character alphanumeric base (vowels never appear) + 1 check digit | Weighted modulus 10 with weights `1, 3, 1, 7, 3, 9` |
-| FIGI | 12 | 2-character prefix + fixed letter `G` + 8-character alphanumeric + 1 check digit | Every second character (by position) doubled, digit-summed, modulus 10 |
+| FIGI | 12 | 2-character prefix (excluding the reserved combinations `BS`, `BM`, `GG`, `GB`, `GH`, `KY`, `VG`) + fixed letter `G` + 8-character consonant/digit body (vowels never appear) + 1 check digit | Every second character (by position) doubled, digit-summed, modulus 10 |
+
+The ISIN check digit position (the 12th character) must itself be a digit `0`-`9`; a letter in that position is rejected even if it happens to expand to a Luhn-sum-preserving digit pair. The FIGI character set excludes the vowels `A`, `E`, `I`, `O`, `U` from every position after the fixed `G`, matching the OMG FIGI specification, which also reserves certain two-letter prefixes to avoid colliding with an ISIN country code.
 
 All four `IsValid*` methods are case-sensitive and require the exact character set for their scheme; they return `false` rather than throwing for `null`, wrong length, or an invalid character. The `Compute*CheckDigit` methods throw `ArgumentNullException` or `ArgumentException` on malformed input, since a caller asking for a check digit is expected to already have a well-formed base value.
 
@@ -84,9 +86,9 @@ Each scheme's implementation is checked, by hand and in the test suite, against 
 - **ISIN**: `US0378331005` (Apple Inc, digits-only NSIN) and `US38259P7069` (Alphabet Inc Class C, NSIN contains a letter)
 - **CUSIP**: `459200101` (IBM) and `037833100` (Apple Inc), plus `68389X105` (Oracle Corp, issue number contains a letter)
 - **SEDOL**: `0263494` (digits-only base) and `B0YBKL9` (base contains letters)
-- **FIGI**: `BBG000BLNNH6`
+- **FIGI**: `BBG000BLNNH6` and `BBG000B9XRY4` (Apple Inc)
 
-The FIGI check-digit algorithm is documented less consistently across secondary sources than the other three. This implementation follows the description published by the Object Management Group (per-character doubling by position, followed by a decimal digit sum, modulus 10) and its output matches the one worked FIGI example above digit for digit. Corroborate independently against the OMG FIGI specification before relying on it for anything where a mismatch would be costly, such as auto-generating identifiers rather than merely validating ones you already have.
+The FIGI check-digit algorithm is documented less consistently across secondary sources than the other three. This implementation follows the description published by the Object Management Group (per-character doubling by position, followed by a decimal digit sum, modulus 10), and its output matches both worked FIGI examples above digit for digit, from two independent issuers. Corroborate independently against the OMG FIGI specification before relying on it for anything where a mismatch would be costly, such as auto-generating identifiers rather than merely validating ones you already have.
 
 ## Dependencies and AOT
 

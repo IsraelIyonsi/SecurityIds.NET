@@ -37,6 +37,18 @@ public class IsinValidationTests
     }
 
     [Theory]
+    [InlineData("US037833100G")]
+    [InlineData("US037833100O")]
+    [InlineData("US037833100W")]
+    public void IsValidIsin_rejects_a_letter_in_the_check_digit_position(string corrupted)
+    {
+        // ISO 6166 requires the 12th character to be a numeric digit. A letter that happens to
+        // expand to a Luhn-sum-preserving digit pair must not validate as if it were the correct
+        // check digit; this is the exact transcription-corruption class the package exists to catch.
+        Assert.False(SecurityIdentifiers.IsValidIsin(corrupted));
+    }
+
+    [Theory]
     [InlineData(null)]
     [InlineData("")]
     [InlineData("US037833100")]

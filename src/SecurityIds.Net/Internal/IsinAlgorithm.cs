@@ -6,6 +6,7 @@ internal static class IsinAlgorithm
     {
         return value.Length == IdentifierConstants.IsinLength
                && HasLetterCountryPrefix(value)
+               && HasNumericCheckDigitPosition(value)
                && TryExpandToDigits(value, out _);
     }
 
@@ -20,6 +21,11 @@ internal static class IsinAlgorithm
         }
 
         return true;
+    }
+
+    private static bool HasNumericCheckDigitPosition(string value)
+    {
+        return value[IdentifierConstants.IsinLength - 1] is >= '0' and <= '9';
     }
 
     internal static bool IsValid(string value)

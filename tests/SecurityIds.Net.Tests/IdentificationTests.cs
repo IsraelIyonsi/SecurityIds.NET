@@ -26,6 +26,9 @@ public class IdentificationTests
     [InlineData("US0378331004")]
     [InlineData("BBG000BLNNH0")]
     [InlineData("123456789012")]
+    [InlineData("US037833100G")]
+    [InlineData("US037833100O")]
+    [InlineData("US037833100W")]
     public void TryIdentify_returns_none_for_unrecognized_or_invalid_values(string? value)
     {
         Assert.Equal(SecurityIdentifierType.None, SecurityIdentifiers.TryIdentify(value));

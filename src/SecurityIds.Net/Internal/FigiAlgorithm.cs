@@ -4,10 +4,16 @@ internal static class FigiAlgorithm
 {
     private const int DoublingRemainder = 1;
 
+    private static readonly HashSet<string> ForbiddenPrefixes = new(StringComparer.Ordinal)
+    {
+        "BS", "BM", "GG", "GB", "GH", "KY", "VG"
+    };
+
     internal static bool IsWellFormed(string value)
     {
         return value.Length == IdentifierConstants.FigiLength
                && HasFixedThirdCharacter(value)
+               && HasAllowedPrefix(value)
                && TryGetPayloadValues(value[..IdentifierConstants.FigiPayloadLength], out _);
     }
 
@@ -44,10 +50,18 @@ internal static class FigiAlgorithm
                 nameof(payload));
         }
 
+        if (!HasAllowedPrefix(payload))
+        {
+            throw new ArgumentException(
+                "FIGI payload must not start with one of the reserved two-letter prefixes " +
+                "(BS, BM, GG, GB, GH, KY, VG) that would collide with an ISIN country code.",
+                nameof(payload));
+        }
+
         if (!TryGetPayloadValues(payload, out var values))
         {
             throw new ArgumentException(
-                "FIGI payload must contain only the digits 0-9 and the letters A-Z.",
+                "FIGI payload must contain only the digits 0-9 and the upper case consonants (vowels A, E, I, O, U are not permitted).",
                 nameof(payload));
         }
 
@@ -59,12 +73,17 @@ internal static class FigiAlgorithm
         return value[IdentifierConstants.FigiPrefixLength] == IdentifierConstants.FigiFixedThirdCharacter;
     }
 
+    private static bool HasAllowedPrefix(string value)
+    {
+        return !ForbiddenPrefixes.Contains(value[..IdentifierConstants.FigiPrefixLength]);
+    }
+
     private static bool TryGetPayloadValues(string payload, out List<int>? values)
     {
         var collected = new List<int>(payload.Length);
         foreach (var character in payload)
         {
-            if (!AlphanumericCode.TryGetValue(character, out var value))
+            if (IsVowel(character) || !AlphanumericCode.TryGetValue(character, out var value))
             {
                 values = null;
                 return false;
@@ -76,6 +95,8 @@ internal static class FigiAlgorithm
         values = collected;
         return true;
     }
+
+    private static bool IsVowel(char character) => character is 'A' or 'E' or 'I' or 'O' or 'U';
 
     private static int CheckDigitFromValues(IReadOnlyList<int> values)
     {
